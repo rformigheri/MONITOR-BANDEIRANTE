@@ -1,1 +1,593 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Produção - Bandeirante</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --verde: #28a745;
+            --amarelo: #ffc107;
+            --vermelho: #dc3545;
+            --azul-escuro: #1e3c72;
+            --azul-medio: #2a5298;
+            --cinza-claro: #f8f9fa;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 95vw;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            opacity: 0.9;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            font-size: 1.2rem;
+        }
+        
+        .status-info {
+            display: flex;
+            gap: 40px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+        }
+        
+        .online {
+            background-color: var(--verde);
+            box-shadow: 0 0 10px var(--verde);
+            animation: pulse 2s infinite;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .plano-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            border: 5px solid;
+            position: relative;
+            overflow: hidden;
+            color: #333;
+        }
+        
+        .plano-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: inherit;
+        }
+        
+        .plano-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .plano-codigo {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--azul-escuro);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .plano-codigo i {
+            font-size: 2rem;
+        }
+        
+        .progress-container {
+            margin: 30px 0;
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .progress-bar {
+            height: 35px;
+            background-color: #e9ecef;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 18px;
+            transition: width 1s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .plano-details {
+            margin-top: 25px;
+            font-size: 1.2rem;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed #ddd;
+        }
+        
+        .detail-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .pedidos-count {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, var(--azul-escuro), var(--azul-medio));
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+            font-size: 1.8rem;
+            color: white;
+        }
+        
+        .loading i {
+            margin-right: 20px;
+            animation: spin 1.5s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px;
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .empty-state i {
+            font-size: 5rem;
+            margin-bottom: 30px;
+            opacity: 0.7;
+        }
+        
+        .last-update {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+        }
+        
+        @media (min-width: 1920px) {
+            h1 {
+                font-size: 4.5rem;
+            }
+            
+            .subtitle {
+                font-size: 2rem;
+            }
+            
+            .dashboard {
+                grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+                gap: 40px;
+            }
+            
+            .plano-card {
+                padding: 40px;
+            }
+            
+            .plano-codigo {
+                font-size: 2.5rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-industry"></i> MONITOR DE PRODUÇÃO</h1>
+            <p class="subtitle">Bandeirante - Acompanhamento em Tempo Real</p>
+        </header>
+        
+        <div class="status-bar">
+            <div class="status-info">
+                <div class="status-item">
+                    <div class="status-indicator online"></div>
+                    <span>Conectado à Planilha</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Atualização automática: <span id="update-timer">30s</span></span>
+                </div>
+            </div>
+            <div class="last-update">
+                <i class="fas fa-clock"></i>
+                Última atualização: <span id="last-update-time">--:--:--</span>
+            </div>
+        </div>
+        
+        <div class="dashboard" id="planos-container">
+            <div class="loading">
+                <i class="fas fa-spinner"></i> Conectando com a planilha...
+            </div>
+        </div>
+    </div>
 
+    <script>
+        // URL da planilha do Google Sheets
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSHSDB0DAQ6dSUATJc5VCQrtRrlHbHC29Zx0zyboZi3ntU8IuD3TQpGAcXwHKAaQPgJJ2qiLHiAGn9h/pub?output=csv';
+        
+        // Configurações
+        const UPDATE_INTERVAL = 30000;
+        const MAX_PLANOS = 12;
+        
+        // Estado da aplicação
+        let planosData = [];
+        let updateTimer;
+        
+        // Elementos da interface
+        const planosContainer = document.getElementById('planos-container');
+        const updateTimerElement = document.getElementById('update-timer');
+        const lastUpdateTimeElement = document.getElementById('last-update-time');
+        
+        // Função para determinar a cor com base no progresso
+        function determinarCor(progresso) {
+            if (progresso <= 30) return 'vermelho';
+            if (progresso <= 70) return 'amarelo';
+            return 'verde';
+        }
+        
+        // Função para obter a cor em formato hexadecimal
+        function obterCorHex(status) {
+            switch(status) {
+                case 'verde': return '#28a745';
+                case 'amarelo': return '#ffc107';
+                case 'vermelho': return '#dc3545';
+                default: return '#6c757d';
+            }
+        }
+        
+        // Função para processar dados da planilha
+        function processarDadosPlanilha(csvData) {
+            try {
+                const linhas = csvData.split('\n').filter(linha => linha.trim() !== '');
+                
+                if (linhas.length === 0) {
+                    throw new Error('Planilha vazia ou sem dados');
+                }
+                
+                // A primeira linha são os cabeçalhos
+                const cabecalhos = linhas[0].split(',').map(h => h.trim());
+                
+                // Processa os dados
+                const dados = [];
+                for (let i = 1; i < linhas.length && dados.length < MAX_PLANOS; i++) {
+                    const valores = linhas[i].split(',');
+                    
+                    // Tenta diferentes padrões de mapeamento
+                    let codigo, familia, pedidos, progresso;
+                    
+                    // Padrão 1: Assume que a primeira coluna é o código do plano
+                    if (valores[0] && valores[0].trim()) {
+                        codigo = valores[0].trim();
+                    } else {
+                        codigo = `PL${i.toString().padStart(3, '0')}`;
+                    }
+                    
+                    // Tenta encontrar números para família, pedidos e progresso
+                    familia = 1;
+                    pedidos = 1;
+                    progresso = 0;
+                    
+                    // Procura por números nas colunas
+                    for (let j = 0; j < valores.length; j++) {
+                        const valor = valores[j] ? valores[j].trim() : '';
+                        const num = parseInt(valor);
+                        
+                        if (!isNaN(num)) {
+                            if (num >= 1 && num <= 9 && familia === 1) {
+                                familia = num;
+                            } else if (num >= 1 && num <= 50 && pedidos === 1) {
+                                pedidos = num;
+                            } else if (num >= 0 && num <= 100 && progresso === 0) {
+                                progresso = num;
+                            }
+                        }
+                    }
+                    
+                    // Garante que o progresso está entre 0 e 100
+                    progresso = Math.max(0, Math.min(100, progresso));
+                    const status = determinarCor(progresso);
+                    
+                    dados.push({
+                        codigo,
+                        familia,
+                        pedidos,
+                        progresso,
+                        status
+                    });
+                }
+                
+                return dados;
+                
+            } catch (error) {
+                console.error('Erro ao processar dados:', error);
+                throw error;
+            }
+        }
+        
+        // Função para carregar dados da planilha
+        async function carregarPlanilha() {
+            try {
+                console.log('🔄 Atualizando dados da planilha...');
+                
+                const timestamp = new Date().getTime();
+                const response = await fetch(`${SHEET_URL}&t=${timestamp}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                
+                const csvData = await response.text();
+                planosData = processarDadosPlanilha(csvData);
+                
+                // Atualiza a interface
+                renderizarPlanos(planosData);
+                
+                // Atualiza o timestamp
+                const agora = new Date();
+                lastUpdateTimeElement.textContent = agora.toLocaleTimeString('pt-BR');
+                
+                console.log(`✅ Dados atualizados: ${planosData.length} planos carregados`);
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar planilha:', error);
+                
+                // Em caso de erro, usa dados de exemplo
+                planosData = gerarDadosExemplo();
+                renderizarPlanos(planosData);
+                
+                lastUpdateTimeElement.textContent = 'Erro - Dados locais';
+            }
+        }
+        
+        // Função para gerar dados de exemplo (fallback)
+        function gerarDadosExemplo() {
+            const dados = [];
+            const familias = [1, 2, 3, 4];
+            
+            for (let i = 1; i <= MAX_PLANOS; i++) {
+                const familia = familias[Math.floor(Math.random() * familias.length)];
+                const pedidos = Math.floor(Math.random() * 15) + 5;
+                const progresso = Math.floor(Math.random() * 100);
+                const status = determinarCor(progresso);
+                
+                dados.push({
+                    codigo: `25${(40 + i).toString().padStart(2, '0')}${familia}`,
+                    familia,
+                    pedidos,
+                    progresso,
+                    status
+                });
+            }
+            
+            return dados;
+        }
+        
+        // Função para renderizar os planos
+        function renderizarPlanos(planos) {
+            if (planos.length === 0) {
+                planosContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>Nenhum plano de produção encontrado</h3>
+                        <p>Verifique a conexão com a planilha</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            planosContainer.innerHTML = '';
+            
+            planos.forEach((plano, index) => {
+                const card = document.createElement('div');
+                card.className = 'plano-card';
+                
+                // Define a cor da borda baseada no status
+                const borderColor = obterCorHex(plano.status);
+                card.style.borderColor = borderColor;
+                
+                // Cor da barra de progresso
+                const progressColor = obterCorHex(plano.status);
+                
+                // Ícone baseado na família
+                let familiaIcon;
+                switch(plano.familia) {
+                    case 1: familiaIcon = 'fas fa-cube'; break;
+                    case 2: familiaIcon = 'fas fa-cubes'; break;
+                    case 3: familiaIcon = 'fas fa-box'; break;
+                    case 4: familiaIcon = 'fas fa-box-open'; break;
+                    default: familiaIcon = 'fas fa-box';
+                }
+                
+                card.innerHTML = `
+                    <div class="plano-header">
+                        <div class="plano-codigo">
+                            <i class="${familiaIcon}"></i> ${plano.codigo}
+                        </div>
+                        <div class="status-indicator" style="background-color: ${borderColor};"></div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-info">
+                            <span>Progresso do Plano</span>
+                            <span><strong>${plano.progresso}%</strong></span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${plano.progresso}%; background-color: ${progressColor};">
+                                ${plano.progresso}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="plano-details">
+                        <div class="detail-row">
+                            <span><i class="fas fa-object-group"></i> Família:</span>
+                            <span><strong>${plano.familia}</strong></span>
+                        </div>
+                        <div class="detail-row">
+                            <span><i class="fas fa-list-ol"></i> Pedidos no Plano:</span>
+                            <span class="pedidos-count">
+                                <i class="fas fa-file-invoice"></i> ${plano.pedidos}
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <span><i class="fas fa-tachometer-alt"></i> Status:</span>
+                            <span style="color: ${borderColor}; font-weight: bold;">
+                                ${plano.status === 'verde' ? 'No Prazo' : plano.status === 'amarelo' ? 'Atenção' : 'Atrasado'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                
+                planosContainer.appendChild(card);
+            });
+        }
+        
+        // Função para iniciar atualização automática
+        function iniciarAtualizacaoAutomatica() {
+            let tempoRestante = UPDATE_INTERVAL / 1000;
+            
+            updateTimer = setInterval(() => {
+                tempoRestante--;
+                updateTimerElement.textContent = `${tempoRestante}s`;
+                
+                if (tempoRestante <= 0) {
+                    carregarPlanilha();
+                    tempoRestante = UPDATE_INTERVAL / 1000;
+                }
+            }, 1000);
+        }
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            // Carrega os dados imediatamente
+            carregarPlanilha();
+            
+            // Inicia a atualização automática
+            iniciarAtualizacaoAutomatica();
+            
+            // Também atualiza a cada UPDATE_INTERVAL
+            setInterval(carregarPlanilha, UPDATE_INTERVAL);
+        });
+    </script>
+</body>
+</html>
